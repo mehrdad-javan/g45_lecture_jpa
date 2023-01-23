@@ -5,9 +5,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Entity
 //@Table(name = "TBL_STUDENTS")
@@ -44,6 +42,14 @@ public class Student {
 
     @ManyToMany(mappedBy = "participants")
     private List<Course> enrolledCourses;
+
+
+    @ManyToMany()
+    @JoinTable(name = "students_competences"
+            , joinColumns = @JoinColumn(name = "student_id")
+            , inverseJoinColumns = @JoinColumn(name = "competence_id")
+    )
+    private Set<Competence> competences;
 
     // ctors
 
@@ -156,6 +162,16 @@ public class Student {
         this.enrolledCourses = enrolledCourses;
     }
 
+    public Set<Competence> getCompetences() {
+        if (competences == null) competences = new HashSet<>();
+        return competences;
+    }
+
+    public void setCompetences(Set<Competence> competences) {
+        this.competences = competences;
+    }
+
+
     public void borrowBook(Book book) {
         if (book == null) throw new IllegalArgumentException("Book data was null");
         if (borrowedBooks == null) borrowedBooks = new ArrayList<>();
@@ -190,6 +206,25 @@ public class Student {
             enrolledCourses.remove(course);
         }
     }
+
+
+
+    public void addCompetence(Competence competence) {
+        if (competence == null) throw new IllegalArgumentException("competence is null");
+        if (competences == null) competences = new HashSet<>();
+        if (!competence.getStudents().contains(this)) {
+            competences.add(competence);
+        }
+
+    }
+
+    public void removeCompetence(Competence competence) {
+        if (competence == null) throw new IllegalArgumentException("competence is null");
+        if (competences == null) competences = new HashSet<>();
+        competence.getStudents().remove(this);
+        competences.remove(competence);
+    }
+
 
 
     // equal & hashCode
