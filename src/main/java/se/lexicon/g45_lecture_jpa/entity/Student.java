@@ -5,6 +5,8 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -31,6 +33,18 @@ public class Student {
     private boolean status;
     private LocalDateTime registrationDate;
 
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
+    @JoinColumn(name = "address_id")
+    private Address address;
+
+
+    @OneToMany(mappedBy = "borrower", orphanRemoval = true)
+    private List<Book> borrowedBooks;
+
+
+    @ManyToMany(mappedBy = "participants")
+    private List<Course> enrolledCourses;
+
     // ctors
 
     public Student() {
@@ -44,6 +58,16 @@ public class Student {
         this.lastName = lastName;
         this.email = email;
         this.birthDate = birthDate;
+    }
+
+
+    public Student(String firstName, String lastName, String email, LocalDate birthDate, Address address) {
+        this();
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.birthDate = birthDate;
+        setAddress(address);
     }
 
     // setters & getters
@@ -103,6 +127,70 @@ public class Student {
     public void setRegistrationDate(LocalDateTime registrationDate) {
         this.registrationDate = registrationDate;
     }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        //bi directional
+        if (address != null) address.setStudent(this);
+
+        this.address = address;
+    }
+
+    public List<Book> getBorrowedBooks() {
+        return borrowedBooks;
+    }
+
+    public void setBorrowedBooks(List<Book> borrowedBooks) {
+        this.borrowedBooks = borrowedBooks;
+    }
+
+    public List<Course> getEnrolledCourses() {
+        if (enrolledCourses == null) enrolledCourses = new ArrayList<>();
+        return enrolledCourses;
+    }
+
+    public void setEnrolledCourses(List<Course> enrolledCourses) {
+        this.enrolledCourses = enrolledCourses;
+    }
+
+    public void borrowBook(Book book) {
+        if (book == null) throw new IllegalArgumentException("Book data was null");
+        if (borrowedBooks == null) borrowedBooks = new ArrayList<>();
+
+        borrowedBooks.add(book);
+        book.setBorrower(this);
+
+    }
+
+    public void returnBook(Book book) {
+        if (book == null) throw new IllegalArgumentException("Book data was null");
+        if (borrowedBooks != null) {
+            book.setBorrower(null);
+            borrowedBooks.remove(book);
+        }
+    }
+
+
+    public void enrollCourse(Course course) {
+        if (course == null) throw new IllegalArgumentException("course data was null");
+        if (enrolledCourses == null) enrolledCourses = new ArrayList<>();
+
+        enrolledCourses.add(course);
+        course.getParticipants().add(this);
+    }
+
+
+    public void unEnrollCourse(Course course) {
+        if (course == null) throw new IllegalArgumentException("course data was null");
+        if (enrolledCourses != null) {
+            course.getParticipants().remove(this);
+            enrolledCourses.remove(course);
+        }
+    }
+
 
     // equal & hashCode
 
